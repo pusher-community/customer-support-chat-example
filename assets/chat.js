@@ -121,7 +121,7 @@
 
             const message = $('#newMessage').val().trim()
 
-            chat.currentUser.addMessage(message, chat.room, messageid => {}, error => {})
+            chat.currentUser.addMessage(message, chat.room)
 
             $('#newMessage').val('')
         },
