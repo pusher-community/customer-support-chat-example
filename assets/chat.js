@@ -69,11 +69,6 @@
             });
 
             chatManager.connect({
-                delegate: {
-                    newMessage: message => {
-                        console.log(message)
-                    }
-                },
                 onSuccess: currentUser => {
                     chat.currentUser = currentUser
 
