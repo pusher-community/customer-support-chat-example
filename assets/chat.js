@@ -117,7 +117,11 @@
 
             const message = $('#newMessage').val().trim()
 
-            chat.currentUser.addMessage(message, chat.room)
+            chat.currentUser.sendMessage(
+                {text: message, roomId: chat.room.id},
+                msgId => { console.log("Message added!") },
+                error => { console.log(`Error adding message to ${chat.room.id}: ${error}`) }
+            )
 
             $('#newMessage').val('')
         },

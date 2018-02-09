@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    const PUSHER_INSTANCE_LOCATOR = "INSTANCE_LOCATOR"
+    const PUSHER_INSTANCE_LOCATOR = "v1:us1:605e3d23-d042-48cc-af6d-498fee1b8dbc"
 
     // ----------------------------------------------------
     // Chat Details
@@ -104,9 +104,12 @@
                     // Get all joinable rooms and join them...
                     user.getJoinableRooms(rooms => rooms.forEach(room => user.joinRoom(room.id)))
 
+                    user.getJoinableRooms(rooms => console.log(rooms))
+
                     // Get all rooms and put a link on the sidebar...
                     user.getAllRooms(
                         allRooms => {
+                            console.log(allRooms)
                             allRooms.forEach(room => {
                                 if ( ! chat.rooms[room.id]) {
                                     chat.rooms[room.id] = room
