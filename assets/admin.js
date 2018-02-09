@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    const PUSHER_INSTANCE_LOCATOR = "v1:us1:605e3d23-d042-48cc-af6d-498fee1b8dbc"
+    const PUSHER_INSTANCE_LOCATOR = "INSTANCE_LOCATOR"
 
     // ----------------------------------------------------
     // Chat Details
@@ -82,7 +82,11 @@
 
             const message = $('#replyMessage input').val().trim()
 
-            chat.currentUser.addMessage(message, chat.currentRoom, messageId => {}, error => {})
+            chat.currentUser.sendMessage(
+                {text: message, roomId: chat.currentRoom.id},
+                msgId => console.log("Message added!"),
+                error => console.log(`Error adding message to ${chat.currentRoom.id}: ${error}`)
+            )
 
             $('#replyMessage input').val('')
         },
@@ -101,26 +105,16 @@
                 onSuccess: user => {
                     chat.currentUser = user
 
-                    // Get all joinable rooms and join them...
-                    user.getJoinableRooms(rooms => rooms.forEach(room => user.joinRoom(room.id)))
-
-                    user.getJoinableRooms(rooms => console.log(rooms))
-
                     // Get all rooms and put a link on the sidebar...
-                    user.getAllRooms(
-                        allRooms => {
-                            console.log(allRooms)
-                            allRooms.forEach(room => {
-                                if ( ! chat.rooms[room.id]) {
-                                    chat.rooms[room.id] = room
+                    user.rooms.forEach(room => {
+                        if ( ! chat.rooms[room.id]) {
+                            chat.rooms[room.id] = room
 
-                                    $('#rooms').append(
-                                        `<li class="nav-item"><a data-room-id="${room.id}" class="nav-link" href="#">${room.name}</a></li>`
-                                    )
-                                }
-                            })
+                            $('#rooms').append(
+                                `<li class="nav-item"><a data-room-id="${room.id}" class="nav-link" href="#">${room.name}</a></li>`
+                            )
                         }
-                    )
+                    })
                 }
             })
         }
