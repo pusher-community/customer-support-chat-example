@@ -36,14 +36,14 @@ app.post('/session/load', (req, res, next) => {
     // creating and go straight into fetching the chat room for that user
 
     chatkit.createUser(req.body.email, req.body.name)
-        .then(() => getUserRoom(req, res, next))
+        .then(() => getUserRoom(req, res, next, false))
         .catch(err => {
             (err.error_type === 'services/chatkit/user/user_already_exists')
-                ? getUserRoom(req, res, next)
+                ? getUserRoom(req, res, next, true)
                 : next(err)
         })
 
-    function getUserRoom(req, res, next) {
+    function getUserRoom(req, res, next, existingAccount) {
         const name  = req.body.name
         const email = req.body.email
 
@@ -66,7 +66,7 @@ app.post('/session/load', (req, res, next) => {
                     method: 'POST',
                     path: '/rooms',
                     jwt: chatkit.generateAccessToken({userId: email}).token,
-                    body: { name: email, private: true, user_ids: ['_superuser'] },
+                    body: { name: email, private: true, user_ids: ['chatkit-dashboard'] },
                 };
 
                 // Since we can't find a client room, we will create one and return that.
@@ -74,7 +74,7 @@ app.post('/session/load', (req, res, next) => {
                        .then(room => res.json(room))
                        .catch(err => next(new Error(`${err.error_type} - ${err.error_description}`)))
             })
-            .catch(err => next(new Error(`${err.error_type} - ${err.error_description}`)))
+            .catch(err => next(new Error(`ERROR: ${err.error_type} - ${err.error_description}`)))
     }
 })
 

@@ -1,7 +1,7 @@
 (function() {
     'use strict';
 
-    const PUSHER_INSTANCE_LOCATOR = "v1:us1:eaf7c6de-c0e4-4ad1-ada2-df7127e4de0a"
+    const PUSHER_INSTANCE_LOCATOR = "INSTANCE_LOCATOR"
 
     // ----------------------------------------------------
     // Chat Details
@@ -64,6 +64,7 @@
             chatBody.find('.login-screen').removeClass('active')
 
             const chatManager = new Chatkit.ChatManager({
+                userId: chat.userId,
                 instanceLocator: PUSHER_INSTANCE_LOCATOR,
                 tokenProvider: new Chatkit.TokenProvider({userId: chat.userId, url: "/session/auth"})
             });
