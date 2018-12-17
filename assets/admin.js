@@ -61,13 +61,20 @@
                 $('.response').show()
                 $('#room-title').text(chat.currentRoom.name)
 
-                chat.currentUser.fetchMessagesFromRoom(chat.currentRoom, {}, msgs => {
-                    msgs.forEach(message => helpers.displayChatMessage(message))
-
-                    chat.currentUser.subscribeToRoom(chat.currentRoom, {
-                        newMessage: message => helpers.displayChatMessage(message)
-                    })
+                chat.currentUser.fetchMessages({
+                    roomId: chat.currentRoom.id
                 })
+                    .then(msgs => {
+                        msgs.forEach(message => helpers.displayChatMessage(message))
+
+                        // Subscribe to the room and add a listener for new messages
+                        chat.currentUser.subscribeToRoom({
+                            id: chat.currentRoom.id,
+                            hooks: {
+                                onMessage: message => helpers.displayChatMessage(message),
+                            },
+                        })
+                    })
             }
 
             evt.preventDefault()
@@ -82,11 +89,12 @@
 
             const message = $('#replyMessage input').val().trim()
 
-            chat.currentUser.sendMessage(
-                {text: message, roomId: chat.currentRoom.id},
-                msgId => console.log("Message added!"),
-                error => console.log(`Error adding message to ${chat.currentRoom.id}: ${error}`)
-            )
+            chat.currentUser.sendMessage({
+                text: message,
+                roomId: chat.currentRoom.id,
+            })
+                .then(msgId => console.log("Message added!"))
+                .catch(error => console.log(`Error adding message to ${chat.currentRoom.id}: ${error}`))
 
             $('#replyMessage input').val('')
         },
@@ -98,16 +106,19 @@
             const chatManager = new Chatkit.ChatManager({
                 userId: "chatkit-dashboard",
                 instanceLocator: PUSHER_INSTANCE_LOCATOR,
-                tokenProvider: new Chatkit.TokenProvider({url: "/session/auth", userId: 'chatkit-dashboard'}),
+                tokenProvider: new Chatkit.TokenProvider({
+                    url: "/session/auth",
+                    queryParams: { user_id: 'chatkit-dashboard' }
+                }),
             });
 
-            chatManager.connect({
-                onSuccess: user => {
-                    chat.currentUser = user
+            chatManager.connect()
+                .then(currentUser => {
+                    chat.currentUser = currentUser
 
                     // Get all rooms and put a link on the sidebar...
                     user.rooms.forEach(room => {
-                        if ( ! chat.rooms[room.id]) {
+                        if (!chat.rooms[room.id]) {
                             chat.rooms[room.id] = room
 
                             $('#rooms').append(
@@ -115,8 +126,7 @@
                             )
                         }
                     })
-                }
-            })
+                })
         }
     }
 

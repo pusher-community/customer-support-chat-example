@@ -63,30 +63,47 @@
             chatBody.find('.chats').addClass('active')
             chatBody.find('.login-screen').removeClass('active')
 
-            const chatManager = new Chatkit.ChatManager({
-                userId: chat.userId,
-                instanceLocator: PUSHER_INSTANCE_LOCATOR,
-                tokenProvider: new Chatkit.TokenProvider({userId: chat.userId, url: "/session/auth"})
+            // Create a token provider to retrieve the token from our Node server
+            const tokenProvider = new Chatkit.TokenProvider({
+                url: "/session/auth",
+                queryParams: { user_id: chat.userId },
             });
 
-            chatManager.connect({
-                onSuccess: currentUser => {
+            // Create an instance of the chatkit manager
+            const chatManager = new Chatkit.ChatManager({
+                tokenProvider,
+                instanceLocator: PUSHER_INSTANCE_LOCATOR,
+                userId: chat.userId,
+            });
+
+            // Connect to chatkit
+            chatManager.connect()
+                .then(currentUser => {
+                    // Successful connection
                     chat.currentUser = currentUser
 
-                    currentUser.fetchMessagesFromRoom(chat.room, {}, messages => {
-                        chatBody.find('.loader-wrapper').hide()
-                        chatBody.find('.input, .messages').show()
-
-                        messages.forEach(message => helpers.NewChatMessage(message))
-
-                        currentUser.subscribeToRoom(chat.room, {
-                            newMessage: message => helpers.NewChatMessage(message)
-                        })
-                    }, err => {
-                        console.error(err)
+                    // Fetch ,essages and add them to the UI
+                    currentUser.fetchMessages({
+                        roomId: chat.room.id
                     })
-                }
-            });
+                        .then(messages => {
+                            // Hide the loading screen
+                            chatBody.find('.loader-wrapper').hide()
+                            chatBody.find('.input, .messages').show()
+
+                            // Add messages to the UI
+                            messages.forEach(message => helpers.NewChatMessage(message))
+
+                            // Subscribe to the room and add a listener for new messages
+                            currentUser.subscribeToRoom({
+                                id: chat.room.id,
+                                hooks: {
+                                    onMessage: message => helpers.NewChatMessage(message),
+                                },
+                            })
+                        })
+                })
+                .catch(err => { console.error(err) })
         },
 
         /**
@@ -117,10 +134,16 @@
 
             const message = $('#newMessage').val().trim()
 
-            chat.currentUser.sendMessage(
-                {text: message, roomId: chat.room.id},
-                msgId => { console.log("Message added!") },
-                error => { console.log(`Error adding message to ${chat.room.id}: ${error}`) }
+            chat.currentUser.sendMessage({
+                text: message,
+                roomId: chat.room.id
+            })
+                .then(msgId => {
+                    console.log("Message added!")
+                })
+                .catch(err => {
+                    console.log(`Error adding message to ${chat.room.id}: ${error}`)
+                })
             )
 
             $('#newMessage').val('')
